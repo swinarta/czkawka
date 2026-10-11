@@ -1,4 +1,3 @@
-use czkawka_core::TOOLS_NUMBER;
 use czkawka_core::localizer_core::LANGUAGE_LIST;
 use i18n_embed::DesktopLanguageRequester;
 use i18n_embed::unic_langid::LanguageIdentifier;
@@ -83,6 +82,7 @@ fn translate_items(app: &MainWindow) {
     translation.set_save_button_text(flk!("save_button").into());
     translation.set_sort_button_text(flk!("sort_button").into());
     translation.set_rename_button_text(flk!("rename_button").into());
+    translation.set_merge_button_text(flk!("merge_button").into());
     translation.set_motto_text(flk!("motto").into());
     translation.set_unicorn_text(flk!("unicorn").into());
     translation.set_repository_text(flk!("repository").into());
@@ -126,6 +126,8 @@ fn translate_items(app: &MainWindow) {
     translation.set_tool_exif_remover_text(flk!("tool_exif_remover").into());
     translation.set_tool_video_optimizer_text(flk!("tool_video_optimizer").into());
     translation.set_tool_bad_names_text(flk!("tool_bad_names").into());
+    translation.set_tool_organiser_text(flk!("tool_organiser").into());
+    translation.set_tool_merge_folders_text(flk!("tool_merge_folders").into());
     translation.set_sort_by_full_name_text(flk!("sort_by_full_name").into());
     translation.set_sort_by_focus_text(flk!("sort_by_focus").into());
     translation.set_sort_reverse_text(flk!("sort_reverse").into());
@@ -282,6 +284,7 @@ fn translate_items(app: &MainWindow) {
     translation.set_softlink_confirmation_text(flk!("softlink_confirmation_text").into());
     translation.set_move_confirmation_text(flk!("move_confirmation_text").into());
     translation.set_rename_confirmation_text(flk!("rename_confirmation_text").into());
+    translation.set_merge_confirmation_text(flk!("merge_confirmation_text").into());
     translation.set_settings_excluded_items_text(flk!("settings_excluded_items").into());
     translation.set_settings_allowed_extensions_text(flk!("settings_allowed_extensions").into());
     translation.set_settings_excluded_extensions_text(flk!("settings_excluded_extensions").into());
@@ -333,6 +336,7 @@ fn translate_items(app: &MainWindow) {
     translation.set_popup_save_title_text(flk!("popup_save_title").into());
     translation.set_popup_save_message_text(flk!("popup_save_message").into());
     translation.set_popup_rename_title_text(flk!("popup_rename_title").into());
+    translation.set_popup_merge_title_text(flk!("popup_merge_title").into());
     translation.set_popup_rename_single_title_text(flk!("popup_rename_single_title").into());
     translation.set_popup_rename_single_same_name_text(flk!("popup_rename_single_same_name").into());
     translation.set_popup_rename_single_target_exists_text(flk!("popup_rename_single_target_exists").into());
@@ -442,24 +446,17 @@ fn translate_items(app: &MainWindow) {
     translation.set_context_menu_copy_full_path_text(flk!("context_menu_copy_full_path_text").into());
     translation.set_context_menu_rename_text(flk!("context_menu_rename_text").into());
 
-    let tools_model: [(SharedString, ActiveTab); TOOLS_NUMBER] = [
+    let tools_model: [(SharedString, ActiveTab); 5] = [
         (flk!("tool_duplicate_files").into(), ActiveTab::DuplicateFiles),
         (flk!("tool_empty_folders").into(), ActiveTab::EmptyFolders),
-        (flk!("tool_big_files").into(), ActiveTab::BigFiles),
-        (flk!("tool_empty_files").into(), ActiveTab::EmptyFiles),
-        (flk!("tool_temporary_files").into(), ActiveTab::TemporaryFiles),
-        (flk!("tool_similar_images").into(), ActiveTab::SimilarImages),
         (flk!("tool_similar_videos").into(), ActiveTab::SimilarVideos),
-        (flk!("tool_music_duplicates").into(), ActiveTab::SimilarMusic),
-        (flk!("tool_invalid_symlinks").into(), ActiveTab::InvalidSymlinks),
-        (flk!("tool_broken_files").into(), ActiveTab::BrokenFiles),
-        (flk!("tool_bad_extensions").into(), ActiveTab::BadExtensions),
-        (flk!("tool_bad_names").into(), ActiveTab::BadNames),
-        (flk!("tool_exif_remover").into(), ActiveTab::ExifRemover),
-        (flk!("tool_video_optimizer").into(), ActiveTab::VideoOptimizer),
+        (flk!("tool_big_files").into(), ActiveTab::BigFiles),
+        (flk!("tool_similar_images").into(), ActiveTab::SimilarImages),
     ];
+    let organiser_tools_model: [(SharedString, ActiveTab); 1] = [(flk!("tool_merge_folders").into(), ActiveTab::Organiser)];
     let gui_state = app.global::<GuiState>();
     gui_state.set_tools_model(ModelRc::new(VecModel::from(tools_model.to_vec())));
+    gui_state.set_organiser_tools_model(ModelRc::new(VecModel::from(organiser_tools_model.to_vec())));
 
     let sort_model: [SortModel; 3] = [
         SortModel {
@@ -503,6 +500,7 @@ fn translate_items(app: &MainWindow) {
     let exif_tags = flk!("column_exif_tags");
     let new_dimensions = flk!("column_new_dimensions");
     let new_name = flk!("column_new_name");
+    let merge_into = flk!("column_merge_into");
 
     let fnm = |model: &[&str]| {
         let shared_string = model.iter().map(|s| (*s).into()).collect::<Vec<SharedString>>();
@@ -523,6 +521,7 @@ fn translate_items(app: &MainWindow) {
     settings.set_exif_remover_column_name(fnm(&[&selection, &size, &file_name, &path, &exif_tags, &mod_date]));
     settings.set_video_optimizer_column_name(fnm(&[&selection, &size, &file_name, &path, &codec, &dimensions, &new_dimensions, &mod_date]));
     settings.set_bad_names_column_name(fnm(&[&selection, &file_name, &new_name, &path]));
+    settings.set_organiser_column_name(fnm(&[&selection, &file_name, &merge_into, &path, &mod_date]));
 
     crate::set_initial_gui_info::apply_combo_box_translations(app);
 }

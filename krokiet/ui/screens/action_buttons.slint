@@ -29,6 +29,7 @@ export component ActionButtons inherits HorizontalLayout {
 
     in-out property <[SingleMainListModel]> duplicate_files_model: [];
     in-out property <[SingleMainListModel]> empty_folder_model: [];
+    in-out property <[SingleMainListModel]> organiser_model: [];
     in-out property <[SingleMainListModel]> big_files_model: [];
     in-out property <[SingleMainListModel]> empty_files_model: [];
     in-out property <[SingleMainListModel]> temporary_files_model: [];
@@ -65,7 +66,8 @@ export component ActionButtons inherits HorizontalLayout {
         (active_tab == ActiveTab.BadExtensions && (GuiState.selected_results_bad_extensions > 0 || GuiState.selected_results_bad_extensions2 > 0)) ||
         (active_tab == ActiveTab.BadNames && (GuiState.selected_results_bad_names > 0 || GuiState.selected_results_bad_names2 > 0)) ||
         (active_tab == ActiveTab.ExifRemover && (GuiState.selected_results_exif_remover > 0 || GuiState.selected_results_exif_remover2 > 0)) ||
-        (active_tab == ActiveTab.VideoOptimizer && (GuiState.selected_results_video_optimizer > 0 || GuiState.selected_results_video_optimizer2 > 0))
+        (active_tab == ActiveTab.VideoOptimizer && (GuiState.selected_results_video_optimizer > 0 || GuiState.selected_results_video_optimizer2 > 0)) ||
+        (active_tab == ActiveTab.Organiser && (GuiState.selected_results_organiser > 0 || GuiState.selected_results_organiser2 > 0))
     );
     in-out property <bool> results_available: (
         (active_tab == ActiveTab.DuplicateFiles && duplicate_files_model.length > 0) ||
@@ -81,7 +83,8 @@ export component ActionButtons inherits HorizontalLayout {
         (active_tab == ActiveTab.BadExtensions && bad_extensions_model.length > 0) ||
         (active_tab == ActiveTab.BadNames && bad_names_model.length > 0) ||
         (active_tab == ActiveTab.ExifRemover && exif_remover_model.length > 0) ||
-        (active_tab == ActiveTab.VideoOptimizer && video_optimizer_model.length > 0)
+        (active_tab == ActiveTab.VideoOptimizer && video_optimizer_model.length > 0) ||
+        (active_tab == ActiveTab.Organiser && organiser_model.length > 0)
     );
 
     height: 30px;
@@ -128,7 +131,8 @@ export component ActionButtons inherits HorizontalLayout {
     }
 
     move_button := Button {
-        visible: lists_enabled;
+        // Organiser rows are merge targets and their members, file actions would hit the wrong folders
+        visible: lists_enabled && GuiState.active_tab != ActiveTab.Organiser;
         height: parent.height;
         enabled: base_buttons_may_be_available && self.visible && checked_anything;
         text: self.visible && Settings.show_only_icons ? "" : Translations.move_button_text;
@@ -140,7 +144,7 @@ export component ActionButtons inherits HorizontalLayout {
     }
 
     delete_button := Button {
-        visible: lists_enabled;
+        visible: lists_enabled && GuiState.active_tab != ActiveTab.Organiser;
         height: parent.height;
         enabled: base_buttons_may_be_available && self.visible && checked_anything;
         text: self.visible && Settings.show_only_icons ? "" : Translations.delete_button_text;
@@ -152,7 +156,7 @@ export component ActionButtons inherits HorizontalLayout {
     }
 
     trash_button := Button {
-        visible: lists_enabled;
+        visible: lists_enabled && GuiState.active_tab != ActiveTab.Organiser;
         height: parent.height;
         enabled: base_buttons_may_be_available && self.visible && checked_anything;
         text: self.visible && Settings.show_only_icons ? "" : Translations.trash_button_text;
@@ -206,6 +210,17 @@ export component ActionButtons inherits HorizontalLayout {
         colorize-icon: true;
         clicked => {
             show_action_popup(PopupRequest.RenameBadFileName);
+        }
+    }
+
+    if lists_enabled && GuiState.active_tab == ActiveTab.Organiser: merge_button := Button {
+        height: parent.height;
+        enabled: base_buttons_may_be_available && self.visible && checked_anything;
+        text: self.visible && Settings.show_only_icons ? "" : Translations.merge_button_text;
+        icon: @image-url("../../icons/krokiet_move.svg");
+        colorize-icon: true;
+        clicked => {
+            show_action_popup(PopupRequest.MergeFolders);
         }
     }
 

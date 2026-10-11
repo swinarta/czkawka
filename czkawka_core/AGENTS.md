@@ -6,7 +6,7 @@
 dependency. Every scanning tool is implemented here; frontends only configure the
 tool structs and drive them via the `Search` trait.
 
-`TOOLS_NUMBER = 14` (defined in `src/lib.rs`).
+`TOOLS_NUMBER = 15` (defined in `src/lib.rs`).
 
 ---
 
@@ -59,7 +59,8 @@ czkawka_core/src/
 │   ├── invalid_symlinks/
 │   ├── temporary/
 │   ├── exif_remover/
-│   └── video_optimizer/           # Crop detection + FFmpeg transcoding
+│   ├── video_optimizer/           # Crop detection + FFmpeg transcoding
+│   └── organiser/                 # Numbered sibling folders (`A (1)`, `A 2`) merged into `A`
 └── helpers/
     ├── messages.rs                # Messages struct (errors, warnings, info)
     ├── delayed_sender.rs          # Rate-limited progress sender
@@ -301,7 +302,7 @@ pub enum ToolType {
     Duplicate, EmptyFolders, EmptyFiles, InvalidSymlinks,
     BrokenFiles, BadExtensions, BadNames, BigFile, SameMusic,
     SimilarImages, SimilarVideos, TemporaryFiles, ExifRemover,
-    VideoOptimizer,
+    VideoOptimizer, Organiser,
     #[default]
     None,
 }

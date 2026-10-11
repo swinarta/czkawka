@@ -2,10 +2,10 @@ use chrono::{NaiveDate, Utc};
 use slint::{Model, ModelRc, SharedString, VecModel};
 
 use crate::common::{
-    IntDataBigFiles, IntDataBrokenFiles, IntDataDuplicateFiles, IntDataEmptyFiles, IntDataEmptyFolders, IntDataExifRemover, IntDataInvalidSymlinks, IntDataSimilarImages,
-    IntDataSimilarMusic, IntDataSimilarVideos, IntDataTemporaryFiles, IntDataVideoOptimizer, StrDataBadExtensions, StrDataBadNames, StrDataBigFiles, StrDataBrokenFiles,
-    StrDataDuplicateFiles, StrDataEmptyFiles, StrDataEmptyFolders, StrDataExifRemover, StrDataInvalidSymlinks, StrDataSimilarImages, StrDataSimilarMusic, StrDataSimilarVideos,
-    StrDataTemporaryFiles, StrDataVideoOptimizer, connect_i32_into_u64,
+    IntDataBigFiles, IntDataBrokenFiles, IntDataDuplicateFiles, IntDataEmptyFiles, IntDataEmptyFolders, IntDataExifRemover, IntDataInvalidSymlinks, IntDataOrganiser,
+    IntDataSimilarImages, IntDataSimilarMusic, IntDataSimilarVideos, IntDataTemporaryFiles, IntDataVideoOptimizer, StrDataBadExtensions, StrDataBadNames, StrDataBigFiles,
+    StrDataBrokenFiles, StrDataDuplicateFiles, StrDataEmptyFiles, StrDataEmptyFolders, StrDataExifRemover, StrDataInvalidSymlinks, StrDataOrganiser, StrDataSimilarImages,
+    StrDataSimilarMusic, StrDataSimilarVideos, StrDataTemporaryFiles, StrDataVideoOptimizer, connect_i32_into_u64,
 };
 use crate::{ActiveTab, ColumnType, CustomSelectColumnModel, SingleMainListModel, flk};
 pub(super) type SelectionResult = (u64, u64, ModelRc<SingleMainListModel>);
@@ -98,6 +98,7 @@ pub(super) fn build_custom_select_columns(active_tab: ActiveTab) -> Vec<CustomSe
     let exif_tags = flk!("column_exif_tags");
     let new_name = flk!("column_new_name");
     let full_path = flk!("column_full_path");
+    let merge_into = flk!("column_merge_into");
 
     match active_tab {
         ActiveTab::DuplicateFiles => vec![
@@ -211,6 +212,13 @@ pub(super) fn build_custom_select_columns(active_tab: ActiveTab) -> Vec<CustomSe
             col_str!(&codec, StrDataVideoOptimizer::Codec),
             col_int_pair!(format!("{} [KB]", size), IntDataVideoOptimizer::SizePart1),
             col_date!(&mod_date, IntDataVideoOptimizer::ModificationDatePart1),
+        ],
+        ActiveTab::Organiser => vec![
+            col_full_path!(&full_path),
+            col_str!(&file_name, StrDataOrganiser::Name),
+            col_str!(&merge_into, StrDataOrganiser::MergeInto),
+            col_str!(&path, StrDataOrganiser::Path),
+            col_date!(&mod_date, IntDataOrganiser::ModificationDatePart1),
         ],
         ActiveTab::Settings | ActiveTab::About => Vec::new(),
     }

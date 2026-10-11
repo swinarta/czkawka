@@ -1,4 +1,4 @@
-import { Button, ListView } from "std-widgets.slint";
+import { Button, Palette, ScrollView } from "std-widgets.slint";
 import { ActiveTab, BottomPanelVisibility } from "../globals/common.slint";
 import { ColorPalette } from "../globals/color_palette.slint";
 import { GuiState } from "../globals/gui_state.slint";
@@ -10,6 +10,7 @@ import { MaxTextMeasure } from "../globals/text_size.slint";
 component TabItem {
     in property <string> text;
     in property <ActiveTab> curr_tab;
+    in property <length> indent: 0px;
     callback changed_active_tab();
 
     Rectangle {
@@ -51,8 +52,9 @@ component TabItem {
     }
 
     Text {
+        x: root.indent;
         text: root.text;
-        width: parent.width;
+        width: parent.width - root.indent;
         horizontal-alignment: center;
         font-size: FontSizes.normal;
         font-weight: FontSizes.bold_light;
@@ -68,8 +70,60 @@ component TabItem {
     ]
 }
 
+component GroupHeader {
+    in property <string> text;
+    in-out property <bool> expanded;
+    // Keeps the selection marker visible while the active tool is hidden in a collapsed group
+    in property <bool> contains_active_tab;
+
+    Rectangle {
+        background: touch_area.has-hover ? ColorPalette.tab_hovered_color : transparent;
+        touch_area := TouchArea {
+            clicked => {
+                root.expanded = !root.expanded;
+            }
+        }
+    }
+
+    Rectangle {
+        x: 0px;
+        width: 5px;
+        border-radius: 2px;
+        visible: !root.expanded && root.contains_active_tab;
+        background: ColorPalette.tab_selected_color;
+    }
+
+    HorizontalLayout {
+        alignment: center;
+        spacing: 4px;
+        VerticalLayout {
+            alignment: center;
+            Path {
+                width: 8px;
+                height: 8px;
+                viewbox-width: 10;
+                viewbox-height: 10;
+                commands: root.expanded ? "M 0 2 L 10 2 L 5 8 Z" : "M 2 0 L 8 5 L 2 10 Z";
+                fill: Palette.foreground;
+            }
+        }
+
+        Text {
+            text: root.text;
+            vertical-alignment: center;
+            font-size: FontSizes.normal;
+            font-weight: FontSizes.bold_light;
+        }
+    }
+}
+
 export component LeftSidePanel {
     callback changed_active_tab();
+
+    property <length> tab_item_height: 25px;
+    property <length> group_item_indent: 12px;
+    // Arrow icon width plus spacing in GroupHeader
+    property <length> group_header_extra_width: 12px;
 
     // Measure the natural width of every tool label so the panel auto-sizes
     // to the widest translated name without any hard-coded per-language constant.
@@ -94,7 +148,19 @@ export component LeftSidePanel {
         ];
     }
 
-    preferred-width: t_tools.measure_width + 20px;
+    t_group_header := MaxTextMeasure {
+        font-size: FontSizes.normal;
+        font-weight: FontSizes.bold_light;
+        texts: [Translations.tool_organiser_text];
+    }
+
+    t_group_items := MaxTextMeasure {
+        font-size: FontSizes.normal;
+        font-weight: FontSizes.bold_light;
+        texts: [Translations.tool_merge_folders_text];
+    }
+
+    preferred-width: max(t_tools.measure_width, t_group_header.measure_width + root.group_header_extra_width, t_group_items.measure_width + root.group_item_indent) + 20px;
     VerticalLayout {
         spacing: 2px;
         Rectangle {
@@ -116,16 +182,37 @@ export component LeftSidePanel {
             }
         }
 
-        ListView {
-            out property <length> element_size: 25px;
-            out property <[{name: string, tab: ActiveTab}]> tools_model <=> GuiState.tools_model;
+        // Only a handful of fixed entries, so a plain layout is fine here instead of ListView
+        ScrollView {
+            vertical-stretch: 1.0;
+            VerticalLayout {
+                alignment: start;
+                for r in GuiState.tools_model: TabItem {
+                    height: root.tab_item_height;
+                    text: r.name;
+                    curr_tab: r.tab;
+                    changed_active_tab() => {
+                        root.changed_active_tab();
+                    }
+                }
 
-            for r[idx] in tools_model: TabItem {
-                height: parent.element_size;
-                text: r.name;
-                curr_tab: r.tab;
-                changed_active_tab() => {
-                    root.changed_active_tab();
+                GroupHeader {
+                    height: root.tab_item_height;
+                    text: Translations.tool_organiser_text;
+                    expanded <=> GuiState.organiser_group_expanded;
+                    contains_active_tab: GuiState.active_tab == ActiveTab.Organiser;
+                }
+
+                if GuiState.organiser_group_expanded: VerticalLayout {
+                    for r in GuiState.organiser_tools_model: TabItem {
+                        height: root.tab_item_height;
+                        indent: root.group_item_indent;
+                        text: r.name;
+                        curr_tab: r.tab;
+                        changed_active_tab() => {
+                            root.changed_active_tab();
+                        }
+                    }
                 }
             }
         }

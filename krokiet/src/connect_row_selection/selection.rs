@@ -90,6 +90,7 @@ pub(crate) fn initialize_selection_struct() {
         ActiveTab::BadNames,
         ActiveTab::ExifRemover,
         ActiveTab::VideoOptimizer,
+        ActiveTab::Organiser,
     ];
 
     let map: HashMap<_, _> = tools.into_iter().map(|tool| (tool, SelectionData::default())).collect();
@@ -182,6 +183,10 @@ pub(crate) fn reverse_checked_on_selection(app: &MainWindow) {
         trace!("Clicked reverse checked on selection");
         let app = a.upgrade().expect("Failed to upgrade app :(");
         let active_tab = app.global::<GuiState>().get_active_tab();
+        // Only member rows can be focused, but there only headers are checkable
+        if active_tab.get_checkable_headers() {
+            return;
+        }
         let mut lock = get_write_selection_lock();
         let selection = lock.get_mut(&active_tab).expect("Failed to get selection data");
         let model = active_tab.get_tool_model(&app);

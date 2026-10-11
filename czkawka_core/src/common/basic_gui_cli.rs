@@ -32,6 +32,7 @@ const TOOL_NAME_MAPPING: &[(&str, ToolType)] = &[
     ("bad-names", ToolType::BadNames),
     ("exif-remover", ToolType::ExifRemover),
     ("video-optimizer", ToolType::VideoOptimizer),
+    ("organiser", ToolType::Organiser),
 ];
 
 fn tool_type_from_cli_name(name: &str) -> Option<ToolType> {

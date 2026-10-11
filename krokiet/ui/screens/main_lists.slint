@@ -35,6 +35,7 @@ export component MainList {
     in-out property <[SingleMainListModel]> broken_files_model: [];
     in-out property <[SingleMainListModel]> bad_extensions_model: [];
     in-out property <[SingleMainListModel]> bad_names_model: [];
+    in-out property <[SingleMainListModel]> organiser_model: [];
     in-out property <[SingleMainListModel]> exif_remover_model: [];
     in-out property <[SingleMainListModel]> video_optimizer_model: [];
 
@@ -264,6 +265,23 @@ export component MainList {
         sort_available: !working;
     }
 
+    organiser := SelectableTableView {
+        visible: GuiState.active_tab == ActiveTab.Organiser;
+        min-width: 200px;
+        height: parent.height;
+        columns <=> Settings.organiser_column_name;
+        column_sizes <=> Settings.organiser_column_size;
+        values <=> organiser_model;
+        checkable_headers: true;
+        parentPathIdx: GuiState.organiser_data_idx[0];
+        fileNameIdx: GuiState.organiser_data_idx[1];
+        previewImageIdx: GuiState.organiser_data_idx[2];
+        topLeftCropIdx: GuiState.organiser_data_idx[3];
+        originalWidthIdx: GuiState.organiser_data_idx[4];
+        originalHeightIdx: GuiState.organiser_data_idx[5];
+        sort_available: !working;
+    }
+
 
     settings_list := SettingsList {
         visible: GuiState.active_tab == ActiveTab.Settings;
@@ -309,6 +327,8 @@ export component MainList {
             video_optimizer.reset_selection();
         } else if (active_tab == ActiveTab.BadNames) {
             bad_names.reset_selection();
+        } else if (active_tab == ActiveTab.Organiser) {
+            organiser.reset_selection();
         } else {
              debug("Non handled reset selection in main_lists.slint");
         }
@@ -343,6 +363,8 @@ export component MainList {
             video_optimizer.scan_started();
         } else if (GuiState.active_tab == ActiveTab.BadNames) {
             bad_names.scan_started();
+        } else if (GuiState.active_tab == ActiveTab.Organiser) {
+            organiser.scan_started();
         } else {
              debug("Non handled reset selection in main_lists.slint");
         }

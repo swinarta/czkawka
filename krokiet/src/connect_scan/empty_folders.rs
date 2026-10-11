@@ -11,7 +11,9 @@ use rayon::prelude::*;
 use slint::{ComponentHandle, ModelRc, SharedString, VecModel, Weak};
 
 use crate::common::{MAX_INT_DATA_EMPTY_FOLDERS, MAX_STR_DATA_EMPTY_FOLDERS, split_u64_into_i32s};
+use crate::connect_row_selection::checker::set_number_of_enabled_items;
 use crate::connect_scan::{MessagesData, ScanData, get_dt_timestamp_string, get_text_messages, insert_data_to_model, reset_selection_at_end, set_common_settings};
+use crate::connect_select::select_all;
 use crate::{ActiveTab, GuiState, MainWindow, flk};
 
 pub(crate) fn scan_empty_folders(a: Weak<MainWindow>, sd: ScanData) {
@@ -48,7 +50,8 @@ fn write_empty_folders_results(app: &MainWindow, vector: Vec<FolderEntry>, messa
         let (data_model_str, data_model_int) = prepare_data_model_empty_folders(fe);
         insert_data_to_model(&items, data_model_str, data_model_int, None);
     }
-    app.set_empty_folder_model(items.into());
+    let (checked_items, _, model) = select_all(&items.into(), ActiveTab::EmptyFolders);
+    app.set_empty_folder_model(model);
     if let Some(critical) = messages_data.critical {
         app.invoke_scan_ended(critical.into());
     } else {
@@ -63,6 +66,7 @@ fn write_empty_folders_results(app: &MainWindow, vector: Vec<FolderEntry>, messa
     }
     app.global::<GuiState>().set_info_text(messages_data.messages.into());
     reset_selection_at_end(app, ActiveTab::EmptyFolders);
+    set_number_of_enabled_items(app, ActiveTab::EmptyFolders, checked_items);
 }
 
 fn prepare_data_model_empty_folders(fe: FolderEntry) -> (ModelRc<SharedString>, ModelRc<i32>) {

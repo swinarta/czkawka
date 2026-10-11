@@ -20,6 +20,7 @@ use czkawka_core::tools::video_optimizer::HardwareEncoder;
 use file_actions::connect_clean_exif::connect_clean;
 use file_actions::connect_delete::{connect_delete_button, connect_trash_button};
 use file_actions::connect_hardlink::connect_hardlink;
+use file_actions::connect_merge::connect_merge;
 use file_actions::connect_move::connect_move;
 use file_actions::connect_optimize_video::connect_optimize_video;
 use file_actions::connect_rename::connect_rename;
@@ -180,6 +181,7 @@ fn main() {
     connect_select(&app, &shared_models);
     connect_move(&app, progress_sender.clone(), stop_flag.clone());
     connect_rename(&app, progress_sender.clone(), stop_flag.clone());
+    connect_merge(&app, progress_sender.clone(), stop_flag.clone());
     connect_optimize_video(&app, progress_sender.clone(), stop_flag.clone());
     connect_clean(&app, progress_sender.clone(), stop_flag.clone());
     connect_hardlink(&app, progress_sender.clone(), stop_flag.clone());
@@ -246,6 +248,7 @@ pub(crate) fn zeroing_all_models(app: &MainWindow) {
     app.set_big_files_model(Rc::new(VecModel::default()).into());
     app.set_bad_extensions_model(Rc::new(VecModel::default()).into());
     app.set_bad_names_model(Rc::new(VecModel::default()).into());
+    app.set_organiser_model(Rc::new(VecModel::default()).into());
     app.set_broken_files_model(Rc::new(VecModel::default()).into());
     app.set_similar_videos_model(Rc::new(VecModel::default()).into());
     app.set_invalid_symlinks_model(Rc::new(VecModel::default()).into());

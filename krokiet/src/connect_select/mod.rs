@@ -18,7 +18,7 @@ use crate::{
     UpdateCustomSelectColumnRequest,
 };
 
-type SelectionResult = (u64, u64, ModelRc<SingleMainListModel>);
+pub(crate) type SelectionResult = (u64, u64, ModelRc<SingleMainListModel>);
 
 // TODO optimize this, not sure if it is possible to not copy entire model to just select item
 // https://github.com/slint-ui/slint/discussions/4595
@@ -39,9 +39,9 @@ pub(crate) fn connect_select(app: &MainWindow, shared_models: &Arc<Mutex<SharedM
         let current_model = active_tab.get_tool_model(&app);
 
         let (checked_items, unchecked_items, new_model) = match select_mode {
-            SelectMode::SelectAll => select_all(&current_model),
+            SelectMode::SelectAll => select_all(&current_model, active_tab),
             SelectMode::UnselectAll => deselect_all(&current_model),
-            SelectMode::InvertSelection => invert_selection(&current_model),
+            SelectMode::InvertSelection => invert_selection(&current_model, active_tab),
             SelectMode::InvertSelectionInGroup => invert_selection_in_group(&current_model),
             SelectMode::SelectTheBiggestSize => select_by_property(&current_model, active_tab, Property::Size, true),
             SelectMode::SelectTheSmallestSize => select_by_property(&current_model, active_tab, Property::Size, false),
@@ -170,7 +170,11 @@ enum Property {
 pub(crate) fn set_select_buttons(app: &MainWindow) {
     let active_tab = app.global::<GuiState>().get_active_tab();
     let settings = app.global::<Settings>();
-    let mut base_buttons = vec![SelectMode::SelectCustom, SelectMode::SelectAll, SelectMode::UnselectAll, SelectMode::InvertSelection];
+    let mut base_buttons = vec![SelectMode::SelectAll, SelectMode::UnselectAll, SelectMode::InvertSelection];
+    // Custom select filters member rows, which cannot be checked when whole groups are checked via headers
+    if !active_tab.get_checkable_headers() {
+        base_buttons.insert(0, SelectMode::SelectCustom);
+    }
 
     let additional_buttons = match active_tab {
         ActiveTab::DuplicateFiles | ActiveTab::SimilarVideos | ActiveTab::SimilarMusic => vec![
@@ -218,7 +222,8 @@ pub(crate) fn set_select_buttons(app: &MainWindow) {
         | ActiveTab::ExifRemover
         | ActiveTab::VideoOptimizer
         | ActiveTab::Settings
-        | ActiveTab::About => Vec::new(),
+        | ActiveTab::About
+        | ActiveTab::Organiser => Vec::new(),
     };
 
     base_buttons.extend(additional_buttons.into_iter().filter_map(|(mode, enabled)| enabled.then_some(mode)));
@@ -356,11 +361,12 @@ fn select_all_except_by_property(model: &ModelRc<SingleMainListModel>, active_ta
     (checked_items, unchecked_items, ModelRc::new(VecModel::from(old_data)))
 }
 
-fn select_all(model: &ModelRc<SingleMainListModel>) -> SelectionResult {
+pub(crate) fn select_all(model: &ModelRc<SingleMainListModel>, active_tab: ActiveTab) -> SelectionResult {
+    let checkable_headers = active_tab.get_checkable_headers();
     let mut checked_items = 0;
     let mut old_data = model.iter().collect::<Vec<_>>();
     for x in &mut old_data {
-        if !x.header_row {
+        if x.header_row == checkable_headers {
             if !x.checked {
                 checked_items += 1;
             }
@@ -382,12 +388,13 @@ fn deselect_all(model: &ModelRc<SingleMainListModel>) -> SelectionResult {
     (0, unchecked_items, ModelRc::new(VecModel::from(old_data)))
 }
 
-fn invert_selection(model: &ModelRc<SingleMainListModel>) -> SelectionResult {
+fn invert_selection(model: &ModelRc<SingleMainListModel>, active_tab: ActiveTab) -> SelectionResult {
+    let checkable_headers = active_tab.get_checkable_headers();
     let mut checked_items = 0;
     let mut unchecked_items = 0;
     let mut old_data = model.iter().collect::<Vec<_>>();
     for x in &mut old_data {
-        if !x.header_row {
+        if x.header_row == checkable_headers {
             if x.checked {
                 unchecked_items += 1;
             } else {
@@ -520,7 +527,7 @@ mod tests {
         model[1].header_row = true;
         let model = create_model_from_model_vec(&model);
 
-        let (checked_items, unchecked_items, new_model) = select_all(&model);
+        let (checked_items, unchecked_items, new_model) = select_all(&model, ActiveTab::DuplicateFiles);
 
         assert_eq!(checked_items, 4);
         assert_eq!(unchecked_items, 0);
@@ -529,6 +536,42 @@ mod tests {
         assert!(new_model.row_data(2).unwrap().checked);
         assert!(new_model.row_data(3).unwrap().checked);
         assert!(new_model.row_data(4).unwrap().checked);
+    }
+
+    #[test]
+    fn select_all_with_checkable_headers_marks_only_header_rows() {
+        let mut model = get_model_vec(5);
+        model[0].header_row = true;
+        model[3].header_row = true;
+        let model = create_model_from_model_vec(&model);
+
+        let (checked_items, unchecked_items, new_model) = select_all(&model, ActiveTab::Organiser);
+
+        assert_eq!(checked_items, 2);
+        assert_eq!(unchecked_items, 0);
+        assert!(new_model.row_data(0).unwrap().checked);
+        assert!(!new_model.row_data(1).unwrap().checked);
+        assert!(!new_model.row_data(2).unwrap().checked);
+        assert!(new_model.row_data(3).unwrap().checked);
+        assert!(!new_model.row_data(4).unwrap().checked);
+    }
+
+    #[test]
+    fn invert_selection_with_checkable_headers_toggles_only_header_rows() {
+        let mut model = get_model_vec(4);
+        model[0].header_row = true;
+        model[0].checked = true;
+        model[2].header_row = true;
+        let model = create_model_from_model_vec(&model);
+
+        let (checked_items, unchecked_items, new_model) = invert_selection(&model, ActiveTab::Organiser);
+
+        assert_eq!(checked_items, 1);
+        assert_eq!(unchecked_items, 1);
+        assert!(!new_model.row_data(0).unwrap().checked);
+        assert!(!new_model.row_data(1).unwrap().checked);
+        assert!(new_model.row_data(2).unwrap().checked);
+        assert!(!new_model.row_data(3).unwrap().checked);
     }
 
     #[test]
@@ -558,7 +601,7 @@ mod tests {
         model[2].checked = false;
         let model = create_model_from_model_vec(&model);
 
-        let (checked_items, unchecked_items, new_model) = invert_selection(&model);
+        let (checked_items, unchecked_items, new_model) = invert_selection(&model, ActiveTab::DuplicateFiles);
 
         assert_eq!(checked_items, 3);
         assert_eq!(unchecked_items, 1);

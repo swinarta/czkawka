@@ -134,6 +134,11 @@ pub(crate) fn connect_show_confirmation(app: &MainWindow, shared_models: Arc<Mut
                 base.push_str(format!("\n{}", flk!("rust_rename_confirmation_number_simple", items = res.checked_items_number)).as_str());
                 translation.set_rename_confirmation_text(base.into());
             }
+            PopupRequest::MergeFolders => {
+                let mut base = flk!("rust_merge_confirmation");
+                base.push_str(format!("\n{}", flk!("rust_merge_confirmation_number_simple", items = res.checked_items_number)).as_str());
+                translation.set_merge_confirmation_text(base.into());
+            }
             PopupRequest::Save => {
                 // There is no confirmation saving
             }

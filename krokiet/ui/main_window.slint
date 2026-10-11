@@ -18,6 +18,7 @@ import { PopupSelectResults } from "popups/popup_select_results.slint";
 import { PopupCustomSelect } from "popups/popup_custom_select.slint";
 import { PopupRenameBadExtensions } from "popups/popup_rename_bad_extensions.slint";
 import { PopupRenameBadFileNames } from "popups/popup_rename_bad_file_names.slint";
+import { PopupMergeFolders } from "popups/popup_merge_folders.slint";
 import { PopupRenameFile } from "popups/popup_rename_file.slint";
 import { PopupError } from "popups/popup_error.slint";
 import { PopupSave } from "popups/popup_save.slint";
@@ -81,6 +82,7 @@ export component MainWindow inherits Window {
     in-out property <[SingleMainListModel]> broken_files_model: [];
     in-out property <[SingleMainListModel]> bad_extensions_model: [];
     in-out property <[SingleMainListModel]> bad_names_model: [];
+    in-out property <[SingleMainListModel]> organiser_model: [];
     in-out property <[SingleMainListModel]> exif_remover_model: [];
     in-out property <[SingleMainListModel]> video_optimizer_model: [];
 
@@ -119,6 +121,7 @@ export component MainWindow inherits Window {
                         broken_files_model <=> root.broken_files_model;
                         bad_extensions_model <=> root.bad_extensions_model;
                         bad_names_model <=> root.bad_names_model;
+                        organiser_model <=> root.organiser_model;
                         exif_remover_model <=> root.exif_remover_model;
                         video_optimizer_model <=> root.video_optimizer_model;
 
@@ -172,6 +175,7 @@ export component MainWindow inherits Window {
             broken_files_model <=> root.broken_files_model;
             bad_extensions_model <=> root.bad_extensions_model;
             bad_names_model <=> root.bad_names_model;
+            organiser_model <=> root.organiser_model;
             exif_remover_model <=> root.exif_remover_model;
             video_optimizer_model <=> root.video_optimizer_model;
 
@@ -284,6 +288,12 @@ export component MainWindow inherits Window {
     }
 
     rename_bad_file_name_popup_window := PopupRenameBadFileNames {
+        height: root.height;
+        width: root.width;
+        x: 0.0; y: 0.0;
+    }
+
+    merge_folders_popup_window := PopupMergeFolders {
         height: root.height;
         width: root.width;
         x: 0.0; y: 0.0;
@@ -486,6 +496,8 @@ export component MainWindow inherits Window {
             rename_extension_popup_window.show_popup();
         } else if (request == PopupRequest.RenameBadFileName) {
             rename_bad_file_name_popup_window.show_popup();
+        } else if (request == PopupRequest.MergeFolders) {
+            merge_folders_popup_window.show_popup();
         } else if (request == PopupRequest.Hardlink) {
             hardlink_popup_window.show_popup();
         } else if (request == PopupRequest.Save) {

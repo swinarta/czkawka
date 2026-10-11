@@ -281,6 +281,25 @@ pub enum StrDataBadNames {
 }
 pub const MAX_STR_DATA_BAD_NAMES: usize = StrDataBadNames::Path as usize + 1;
 
+// Organiser
+#[repr(u8)]
+#[derive(Debug, Eq, PartialEq, TryFromPrimitive)]
+pub enum IntDataOrganiser {
+    ModificationDatePart1,
+    ModificationDatePart2,
+}
+pub const MAX_INT_DATA_ORGANISER: usize = IntDataOrganiser::ModificationDatePart2 as usize + 1;
+
+#[repr(u8)]
+#[derive(Debug, Eq, PartialEq, TryFromPrimitive)]
+pub enum StrDataOrganiser {
+    Name,
+    MergeInto,
+    Path,
+    ModificationDate,
+}
+pub const MAX_STR_DATA_ORGANISER: usize = StrDataOrganiser::ModificationDate as usize + 1;
+
 #[repr(u8)]
 #[derive(Debug, Eq, PartialEq, TryFromPrimitive)]
 // Exif Remover
@@ -453,6 +472,10 @@ impl ActiveTab {
                 StrDataVideoOptimizer::Dimensions => SortIdx::IntIdx(IntDataVideoOptimizer::PixelCount as i32),
                 StrDataVideoOptimizer::NewDimensions => SortIdx::IntIdx(IntDataVideoOptimizer::DiffInPixels as i32),
             },
+            Self::Organiser => match StrDataOrganiser::try_from(str_idx as u8).unwrap_or_else(|_| panic!("Invalid str idx {str_idx} for Organiser")) {
+                StrDataOrganiser::Name | StrDataOrganiser::MergeInto | StrDataOrganiser::Path => SortIdx::StrIdx(str_idx),
+                StrDataOrganiser::ModificationDate => SortIdx::IntIdxPair(IntDataOrganiser::ModificationDatePart1 as i32, IntDataOrganiser::ModificationDatePart2 as i32),
+            },
             Self::Settings | Self::About => panic!("Button should be disabled"),
         }
     }
@@ -474,6 +497,7 @@ impl ActiveTab {
             Self::BadNames => StrDataBadNames::Path as usize,
             Self::ExifRemover => StrDataExifRemover::Path as usize,
             Self::VideoOptimizer => StrDataVideoOptimizer::Path as usize,
+            Self::Organiser => StrDataOrganiser::Path as usize,
             Self::Settings | Self::About => panic!("Button should be disabled"),
         }
     }
@@ -494,6 +518,7 @@ impl ActiveTab {
             Self::BadNames => StrDataBadNames::Name as usize,
             Self::ExifRemover => StrDataExifRemover::Name as usize,
             Self::VideoOptimizer => StrDataVideoOptimizer::Name as usize,
+            Self::Organiser => StrDataOrganiser::Name as usize,
             Self::Settings | Self::About => panic!("Button should be disabled"),
         }
     }
@@ -521,6 +546,7 @@ impl ActiveTab {
             Self::BadNames => IntDataBadNames::ModificationDatePart1 as usize,
             Self::ExifRemover => IntDataExifRemover::ModificationDatePart1 as usize,
             Self::VideoOptimizer => IntDataVideoOptimizer::ModificationDatePart1 as usize,
+            Self::Organiser => IntDataOrganiser::ModificationDatePart1 as usize,
             Self::Settings | Self::About => panic!("Button should be disabled"),
         }
     }
@@ -538,7 +564,7 @@ impl ActiveTab {
             Self::BadNames => IntDataBadNames::SizePart1 as usize,
             Self::ExifRemover => IntDataExifRemover::SizePart1 as usize,
             Self::VideoOptimizer => IntDataVideoOptimizer::SizePart1 as usize,
-            Self::Settings | Self::About | Self::EmptyFolders | Self::InvalidSymlinks => return None,
+            Self::Settings | Self::About | Self::Organiser | Self::EmptyFolders | Self::InvalidSymlinks => return None,
         };
         Some(res)
     }
@@ -614,9 +640,14 @@ impl ActiveTab {
             | Self::BadNames
             | Self::ExifRemover
             | Self::VideoOptimizer => false,
-            Self::SimilarImages | Self::DuplicateFiles | Self::SimilarVideos | Self::SimilarMusic => true,
+            Self::SimilarImages | Self::DuplicateFiles | Self::SimilarVideos | Self::SimilarMusic | Self::Organiser => true,
             Self::Settings | Self::About => panic!("Button should be disabled"),
         }
+    }
+
+    // In Organiser a whole group is checked via its header row, while the rows below only list group members
+    pub(crate) fn get_checkable_headers(self) -> bool {
+        self == Self::Organiser
     }
     pub(crate) fn get_tool_model(self, app: &MainWindow) -> ModelRc<SingleMainListModel> {
         match self {
@@ -634,6 +665,7 @@ impl ActiveTab {
             Self::BadNames => app.get_bad_names_model(),
             Self::ExifRemover => app.get_exif_remover_model(),
             Self::VideoOptimizer => app.get_video_optimizer_model(),
+            Self::Organiser => app.get_organiser_model(),
             Self::Settings | Self::About => panic!("Button should be disabled"),
         }
     }
@@ -654,6 +686,7 @@ impl ActiveTab {
             Self::BadNames => app.set_bad_names_model(model),
             Self::ExifRemover => app.set_exif_remover_model(model),
             Self::VideoOptimizer => app.set_video_optimizer_model(model),
+            Self::Organiser => app.set_organiser_model(model),
             Self::Settings | Self::About => panic!("Button should be disabled"),
         }
     }
@@ -674,6 +707,7 @@ impl ActiveTab {
             ToolType::TemporaryFiles => Self::TemporaryFiles,
             ToolType::ExifRemover => Self::ExifRemover,
             ToolType::VideoOptimizer => Self::VideoOptimizer,
+            ToolType::Organiser => Self::Organiser,
             ToolType::None => panic!("CLI tool parsing never produces ToolType::None"),
         }
     }

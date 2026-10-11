@@ -9,6 +9,7 @@ mod empty_files;
 mod empty_folders;
 mod exif_remover;
 mod invalid_symlinks;
+mod organiser;
 mod same_music;
 mod similar_images;
 mod similar_videos;
@@ -39,6 +40,7 @@ use crate::connect_scan::empty_files::scan_empty_files;
 use crate::connect_scan::empty_folders::scan_empty_folders;
 use crate::connect_scan::exif_remover::scan_exif_remover;
 use crate::connect_scan::invalid_symlinks::scan_invalid_symlinks;
+use crate::connect_scan::organiser::scan_organiser;
 use crate::connect_scan::same_music::scan_similar_music;
 use crate::connect_scan::similar_images::scan_similar_images;
 use crate::connect_scan::similar_videos::scan_similar_videos;
@@ -131,6 +133,7 @@ pub(crate) fn connect_scan_button(
             ActiveTab::TemporaryFiles => scan_temporary_files(a, scan_data),
             ActiveTab::ExifRemover => scan_exif_remover(a, scan_data),
             ActiveTab::VideoOptimizer => scan_video_optimizer(a, scan_data),
+            ActiveTab::Organiser => scan_organiser(a, scan_data),
             ActiveTab::Settings | ActiveTab::About => panic!("Button should be disabled"),
         }
     });
